@@ -50,6 +50,25 @@
     await refreshSalt()
     await refreshIV()
     setMessage("Select secret type: message, image, or file")
+
+    const passwordElement = document.getElementById("password")
+    passwordElement.addEventListener("keyup", function(event) {
+      if (event.key === "Enter") {
+        decrypt()
+      }
+    })
+
+    document.getElementById("show-password").addEventListener("change", (ev) => {
+      if (!passwordElement) {
+        return
+      }
+      if (ev.currentTarget.checked) {
+        passwordElement.type = "text"
+      } else {
+        passwordElement.type = "password"
+      }
+    })
+
   }
 
   async function encrypt() {
@@ -150,7 +169,6 @@
       throw new Error(`Unhandled input type: '${selectedInputType}'`)
     }
 
-    console.log(plainText)
     if (plainText.length <= 0) {
       throw new Error(`Plaintext is empty`)
     }
@@ -238,6 +256,8 @@
       const dataURI = "data:application/octet-stream;base64," + btoa(secretPage)
       document.getElementById("target_link").setAttribute("href", dataURI)
       document.getElementById("target_link").hidden = false
+      document.getElementById("target_link").setAttribute("download", document.getElementById("filename").value)
+      document.getElementById("target_link").text = `Download ${document.getElementById("filename").value}`
 
       setMessage("✅ Ready for download")
 
@@ -298,35 +318,40 @@
 </head>
 <body onload="init()">
   <h1><a href="https://mprimi.github.io/portable-secret/">Portable Secret</a>: Secret Creator</h1>
-  <p>
-    This tool runs entirely in your browser window. <strong>The secret never leaves your computer!</strong><br>
-    But don't take my word for it. Check out the <a href="https://github.com/mprimi/portable-secret/tree/main/creator" target="_blank">source code</a>!
-  </p>
 
-  <!-- Inputs -->
+  <details>
+    <summary>show info</summary>
+      <div>
+        <p>
+          This tool runs entirely in your browser window. <strong>The secret never leaves your computer!</strong><br>
+          But don't take my word for it. Check out the <a href="https://github.com/mprimi/portable-secret/tree/main/creator" target="_blank">source code</a>!
+        </p>
+      </div>
+      <!-- Inputs -->
+      <div>
+        <label for="salt" style="font-weight:bold">Salt: 0x</label>
+        <input type="text" id="salt" size="33" value="❓" required readonly>
+        <input type="button" value="🔄" onclick='refreshSalt()'>
+        <br>
+        <label for="iv" style="font-weight:bold">IV: 0x</label>
+        <input type="text" id="iv" size="33" value="❓" required readonly>
+        <input type="button" value="🔄" onclick='refreshIV()'>
+        <p>
+          <small>Salt and IV are random input coming straight from your browser's Random Number Generator. Do not reuse across messages.</small>
+        </p>
+      </div>
+  </details><br>
 
   <div>
-    Salt: 0x
-    <input type="text" id="salt" size="33" value="❓" required>
-    <input type="button" value="🔄" onclick='refreshSalt()'>
-    <br>
-    IV: 0x
-    <input type="text" id="iv" size="33" value="❓" required>
-    <input type="button" value="🔄" onclick='refreshIV()'>
-    <p>
-      <small>Salt and IV are random input coming straight from your browser's Random Number Generator. Do not reuse across messages.</small>
-    </p>
+    <label for="password" style="font-weight:bold">Password:</label>
+    <input type="password" id="password" size="33" value="banana" autocomplete="off" required>
+    <input type="checkbox" id="show-password" name="show_password">show password</input>
   </div>
 
-  <div>
-    Password:<br>
-    <input type="text" id="password" value="banana" required>
-  </div>
-
 
   <div>
-    Password hint:<br>
-    <textarea rows="8" cols="80" id="password_hint" required>A yellow elongated fruit (technically a berry!)
+    <label for="password_hint" style="font-weight:bold">Password hint:</label><br>
+    <textarea rows="8" cols="80" id="password_hint" autocomplete="off" required>A yellow elongated fruit (technically a berry!)
 6 letters, all lowercase.</textarea>
   </div>
 
@@ -345,7 +370,7 @@
 
   <div id="text_input_div" hidden>
     <h2>📝 Secret message</h2>
-    <textarea rows="16" cols="80" id="text_input" name="text_content"></textarea>
+    <textarea rows="20" cols="80" id="text_input" name="text_content"></textarea>
   </div>
   <div id="image_input_div" hidden>
     <h2>🌆 Secret image</h2>
@@ -356,20 +381,26 @@
     <input type="file" id="file_input" name="file_content">
   </div>
 
-  <!-- Generate button, and Download link -->
+  <br>
 
   <div>
-    <button type="button" onclick='createSecret()'>⚡️ Generate secret</button>
+    <label for="filename" style="font-weight:bold">Output filename:</label>
+    <input type="text" id="filename" name="filename" size="20" value="secrets.html" required>
+  </div>
+  <!-- Generate button, and Download link -->
+  <div>
+    <button type="button" onclick='createSecret(); refreshSalt(); refreshIV()'>⚡️ Generate secret</button>
     <span id="errormsg"></span>
   </div>
+
   <div>
-    <a id="target_link" class="download_link" download="secret.html" hidden>Save secret.html</a>
+    <a id="target_link" class="download_link" style="font-weight:bold" download="secret.html" hidden></a>
   </div>
 
   <!-- Cipertext -->
 
   <details>
-    <summary>Show ciphertext</summary>
+    <summary>show ciphertext</summary>
     <div>
       <textarea rows="8" cols="80" id="cipher"></textarea>
     </div>
